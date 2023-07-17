@@ -1,9 +1,10 @@
 import requests
 import re
-import emoji
 from pprint import pprint
 from bs4 import BeautifulSoup
 from datetime import datetime
+from config import WEATHER_API
+import json
 
 class CityError(Exception):
     def __init__(self, message):
@@ -16,7 +17,7 @@ class WordError(Exception):
 def get_weather(city):
     try:
         r = requests.get(
-            f"http://api.openweathermap.org/data/2.5/weather?q={city.lower()}&appid=9eafb1ae73adb92e4bcc7487d2c9cd77&lang=ru&units=metric"
+            f"http://api.openweathermap.org/data/2.5/weather?q={city.lower()}&appid={WEATHER_API}&lang=ru&units=metric"
         )
         data = r.json()
         return f"Погода             {city}\nТемпература  {data['main']['temp']}°C\nВлажность      {data['main']['humidity']}%\nВетер                {data['wind']['speed']} м/c"
@@ -76,3 +77,19 @@ def kaktus():
     info += article.text
     return info
 
+
+def set_to_db(key, value):
+    try:
+        with open("database.json", "r") as json_file:
+            data = json.load(json_file)
+    except (json.decoder.JSONDecodeError, FileNotFoundError):
+        data = {"data": {}}
+    data["data"][key] = value
+    with open("database.json", "w") as json_file:
+        json.dump(data, json_file, indent=4)
+    
+    
+def get_from_db(key):
+    with open("database.json", "r") as json_file:
+        data = json.load(json_file)
+    return data["data"][key]
