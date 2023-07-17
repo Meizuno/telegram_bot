@@ -61,7 +61,7 @@ def prirucka(word):
         raise WordError("Invalid word")
 
 
-def kaktus():
+def kaktus_check_bonus():
     page = requests.get("http://www.mujkaktus.cz")
     soup = BeautifulSoup(page.content, 'lxml')
     article = soup.find("div", {'class': 'article'})
@@ -70,12 +70,12 @@ def kaktus():
     matches = re.findall(pattern, article.text)
     date = [int(part.strip()) for part in matches[0].split(".") if part.strip().isdigit()]
 
-    info = ""
-    if int(date[0]) == datetime.now().day and int(date[1]) == datetime.now().month:
-        info = "Сегодня акция, успей пополнить счет\n"
+    # if int(date[0]) == datetime.now().day and int(date[1]) == datetime.now().month:
+    #     return article.text
+    if int(date[0]) == 11 and int(date[1]) == 7:
+        return article.text
 
-    info += article.text
-    return info
+    return None
 
 
 def set_to_db(key, value):
@@ -83,7 +83,7 @@ def set_to_db(key, value):
         with open("database.json", "r") as json_file:
             data = json.load(json_file)
     except (json.decoder.JSONDecodeError, FileNotFoundError):
-        data = {"data": {}}
+        data = {"data": {}, "kaktus": {}}
     data["data"][key] = value
     with open("database.json", "w") as json_file:
         json.dump(data, json_file, indent=4)
@@ -93,3 +93,22 @@ def get_from_db(key):
     with open("database.json", "r") as json_file:
         data = json.load(json_file)
     return data["data"][key]
+
+
+def users_kaktus_db(key):
+    try:
+        with open("database.json", "r") as json_file:
+            data = json.load(json_file)
+    except (json.decoder.JSONDecodeError, FileNotFoundError):
+        data = {"data": {}, "kaktus": {}}
+    msg = ""
+    if key in data["kaktus"]:
+        del data["kaktus"][key]
+        msg = "Успешно удаленны из рассылки"
+    else:
+        data["kaktus"][key] = "false"
+        msg = "Успешно добавлены в рассылку"
+    with open("database.json", "w") as json_file:
+        json.dump(data, json_file, indent=4)
+        
+    return msg

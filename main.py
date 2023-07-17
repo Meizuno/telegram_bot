@@ -1,5 +1,7 @@
 from aiogram import Bot, Dispatcher, types, executor
 import emoji
+import schedule
+import asyncio
 from functions import *
 from config import BOT_TOKEN
 
@@ -31,7 +33,7 @@ async def start_command(message: types.Message):
 
 @dp.message_handler(commands=["kaktus"])
 async def start_command(message: types.Message):
-    await bot.send_message(message.chat.id, kaktus())
+    await bot.send_message(message.chat.id, users_kaktus_db(str(message.chat.id)))
 
 
 @dp.message_handler(content_types=["text"])
@@ -47,5 +49,29 @@ async def text_command(message: types.Message):
         except WordError:
            await bot.send_message(message.chat.id, "Проверьте слово") 
 
+
+async def scheduled_function():
+    msg = kaktus_check_bonus()
+    if msg:
+        try:
+            with open("database.json", "r") as json_file:
+                data = json.load(json_file)
+                for key, value in data["kaktus"].items():
+                    if value == 'false':
+                        await bot.send_message(key, msg) 
+                        print("send msg")
+        except (json.decoder.JSONDecodeError, FileNotFoundError):
+            pass
+        
+
+schedule.every(5).seconds.do(scheduled_function)
+
+async def run_schedule():
+    while True:
+        schedule.run_pending()
+        await asyncio.sleep(1)
+
 if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.create_task(run_schedule())
     executor.start_polling(dp, skip_updates=True)
