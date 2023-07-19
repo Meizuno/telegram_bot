@@ -1,6 +1,5 @@
 from aiogram import Bot, Dispatcher, types, executor
 import emoji
-import schedule
 import asyncio
 from functions import *
 from config import BOT_TOKEN
@@ -50,28 +49,27 @@ async def text_command(message: types.Message):
            await bot.send_message(message.chat.id, "Проверьте слово") 
 
 
-async def scheduled_function():
-    msg = kaktus_check_bonus()
-    if msg:
-        try:
-            with open("database.json", "r") as json_file:
-                data = json.load(json_file)
-                for key, value in data["kaktus"].items():
-                    if value == 'false':
-                        await bot.send_message(key, msg) 
-                        print("send msg")
-        except (json.decoder.JSONDecodeError, FileNotFoundError):
-            pass
-        
 
-schedule.every(5).seconds.do(scheduled_function)
-
-async def run_schedule():
+async def task_kaktus():
     while True:
-        schedule.run_pending()
-        await asyncio.sleep(1)
+        msg = kaktus_check_bonus()
+        if msg:
+            try:
+                with open("database.json", "r") as json_file:
+                    data = json.load(json_file)
+            except (json.decoder.JSONDecodeError, FileNotFoundError):
+                data = {"data": {}, "kaktus": {}}
+                
+            if data['kaktus']:
+                for chat_id in data['kaktus'].keys():
+                    await bot.send_message(chat_id, msg)
+                with open("database.json", "w") as json_file:
+                    json.dump(data, json_file, indent=4)
+                await asyncio.sleep(86400)
+        await asyncio.sleep(5)
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.create_task(run_schedule())
+    loop.create_task(task_kaktus())
     executor.start_polling(dp, skip_updates=True)

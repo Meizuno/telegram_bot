@@ -70,9 +70,7 @@ def kaktus_check_bonus():
     matches = re.findall(pattern, article.text)
     date = [int(part.strip()) for part in matches[0].split(".") if part.strip().isdigit()]
 
-    # if int(date[0]) == datetime.now().day and int(date[1]) == datetime.now().month:
-    #     return article.text
-    if int(date[0]) == 11 and int(date[1]) == 7:
+    if int(date[0]) == datetime.now().day and int(date[1]) == datetime.now().month:
         return article.text
 
     return None
@@ -106,7 +104,7 @@ def users_kaktus_db(key):
         del data["kaktus"][key]
         msg = "Успешно удаленны из рассылки"
     else:
-        data["kaktus"][key] = "false"
+        data["kaktus"][key] = "true"
         msg = "Успешно добавлены в рассылку"
     with open("database.json", "w") as json_file:
         json.dump(data, json_file, indent=4)
